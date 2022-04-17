@@ -15,6 +15,16 @@ In order to have the factory firmware download our custom firmware, you'll need 
 1. Setup the [web server](/server) to serve the desired OTA binaries to your device.
 2. Build the [ESP-IDF binary](/espressif) or download the Release binary to flash the device.
 3. Trigger an update via the product's app.
+4. Connect to the Tasmota hotspot and configure!
+
+## Tasmota Setup
+Currently, Tasmota's support for the ESP32-C3 is unofficial. However, power monitoring and MQTT delivery works effectively with the following template:
+
+```json
+{"NAME":"W1901400","GPIO":[0,0,32,0,0,0,224,320,321,0,0,0,0,0,0,0,0,0,2720,2656,2624,0],"FLAG":0,"BASE":1}
+```
+
+[How to use a template?](https://templates.blakadder.com/howto.html)
 
 ## Process
 The included ESP-IDF code is a lightweight OTA client that directly writes to the embedded flash chip, enabling the install of non-app level code, including modfiying the bootloader and partiton table.
