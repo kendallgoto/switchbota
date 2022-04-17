@@ -21,3 +21,5 @@
 #define WRITE_SIZE 0x171000
 
 #define FALLBACK_URL "http://www.wohand.com/app.bin"
+#define FALLBACK_SSID "switchbota"
+#define FALLBACK_PASS "switchbota"

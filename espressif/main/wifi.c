@@ -12,6 +12,7 @@
 
 // You should have received a copy of the GNU General Public License
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
+#include <string.h>
 
 #include "esp_system.h"
 #include "esp_wifi.h"
@@ -26,6 +27,7 @@
 #include "lwip/sys.h"
 
 #include "wifi.h"
+#include "config.h"
 
 static const char *TAG = "wireless";
 
@@ -100,8 +102,22 @@ void wifi_connect()
 {
     wifi_init_config_t cfg = WIFI_INIT_CONFIG_DEFAULT();
     ESP_ERROR_CHECK(esp_wifi_init(&cfg));
-    ESP_ERROR_CHECK(esp_wifi_set_storage(WIFI_STORAGE_RAM));
-
+    // get default config ...
+    wifi_config_t existing_config = { 0 };
+    esp_wifi_get_config(WIFI_IF_STA, &existing_config);
+    ESP_LOGI(TAG, "%s", existing_config.sta.ssid);
+    if(strlen((char *)existing_config.sta.ssid) == 0 || strcmp((char *)existing_config.sta.ssid, "wocao_factory_test") == 0) {
+        ESP_LOGI(TAG, "defaulting to fallback network ...");
+        wifi_config_t fallback_config = {
+            .sta = {
+                .ssid = FALLBACK_SSID,
+                .password = FALLBACK_PASS
+            }
+        };
+        ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_STA));
+        ESP_ERROR_CHECK(esp_wifi_set_config(WIFI_IF_STA, &fallback_config));
+    }
+    
     ESP_ERROR_CHECK(esp_wifi_start());
 }
 
