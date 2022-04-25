@@ -23,6 +23,7 @@ Currently, Tasmota's support for the ESP32-C3 is unofficial. However, power moni
 ```json
 {"NAME":"W1901400","GPIO":[0,0,32,0,0,0,224,320,321,0,0,0,0,0,0,0,0,0,2720,2656,2624,0],"FLAG":0,"BASE":1}
 ```
+[More Template information](https://templates.blakadder.com/switchbot_plugmini_W1901400.html)
 
 [How to use a template?](https://templates.blakadder.com/howto.html)
 
