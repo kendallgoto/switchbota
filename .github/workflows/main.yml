@@ -22,3 +22,7 @@ jobs:
         esp_idf_version: v4.4
         target: esp32c3
         path: 'espressif'
+    - uses: actions/upload-artifact@v3
+      with:
+        name: app.bin
+        path: build/switchbota.bin
