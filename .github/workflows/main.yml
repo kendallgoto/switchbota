@@ -2,9 +2,9 @@ name: SwitchBOTA app.bin build
 
 on:
   push:
-    branches: [ $default-branch ]
-  pull_request:
-    branches: [ $default-branch ]
+    branches:
+      - main
+      - 'releases/**'
 
 jobs:
   build:
