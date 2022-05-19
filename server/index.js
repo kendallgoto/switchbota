@@ -43,11 +43,13 @@ const APP_PATH = path.join(__dirname, 'bin', 'app.bin');
 	download(APP_PATH, APP_URL);
 
 	app.get('/payload.bin', (req, res) => {
+		console.log(req.ip + ' - ' + req.url);
 		const file = path.join(__dirname, 'bin', 'payload.bin');
 		res.setHeader('Content-Type', 'application/octet-stream');
 		res.sendFile(file);
 	})
 	app.get('*', (req, res) => {
+		console.log(req.ip + ' - ' + req.url);
 		const file = path.join(__dirname, 'bin', 'app.bin');
 		res.setHeader('Content-Type', 'application/octet-stream');
 		res.sendFile(file);
