@@ -19,37 +19,72 @@ const port = 80;
 const path = require('path');
 const { https } = require('follow-redirects');
 const fs = require('fs');
+const crypto = require('crypto');
 
-const PAYLOAD_URL = "https://github.com/tasmota/install/blob/0957b916b1484f850af843dd9e6d3733c0a4b095/firmware/unofficial/tasmota32c3_2M.factory.bin?raw=true";
+const PAYLOAD_URL = 'https://github.com/arendst/Tasmota/releases/download/v11.1.0/tasmota32c3.factory.bin';
 const PAYLOAD_PATH = path.join(__dirname, 'bin', 'payload.bin');
-const APP_URL = "https://github.com/kendallgoto/switchbota/releases/latest/download/app.bin";
+const PAYLOAD_BIN_MD5 = '14e7cc0d16e72da007727581520047d5';
+const APP_URL = 'https://github.com/kendallgoto/switchbota/releases/latest/download/app.bin';
 const APP_PATH = path.join(__dirname, 'bin', 'app.bin');
+const APP_BIN_MD5 = 'TODO-GET-UPDATED-APP-BIN-MD5';
 (async function () {
 
-	async function download(path, url) {
+	function getFileHash(path) {
+		const md5Hasher = crypto.createHash('md5');
+		return md5Hasher.update(fs.readFileSync(path)).digest('hex');
+	}
+
+	function deleteInvalidFile(path) {
+		try {
+			console.log(`Deleting invalidated file: ${path}`);
+			fs.unlinkSync(path);
+		} catch (error) {
+			console.log(`Error deleting invalidated file ${path}`);
+			console.log(`Error: ${error}`);
+		}
+	}
+
+	function invalidateFileOnBadMd5(path, md5) {
+		if (fs.existsSync(path))
+		{
+			if (getFileHash(path) != md5)
+			{
+				deleteInvalidFile(path);
+			}
+		}
+	}
+
+	async function download(path, url, md5) {
 		if (!fs.existsSync(path)) {
-			console.log("Downloading missing binary " + url);
+			console.log('Downloading missing binary ' + url);
 			https.get(url, (res) => {
 				const result = fs.createWriteStream(path);
 				res.pipe(result);
 				result.on('finish', () => {
 					result.close();
+					if (getFileHash(path) != md5)
+					{
+						throw(`Download error: file ${path} does not match the expected md5 hash of ${md5}`);
+					}
 				});
 			});
 		}
 	}
 
-	download(PAYLOAD_PATH, PAYLOAD_URL);
-	download(APP_PATH, APP_URL);
+	invalidateFileOnBadMd5(PAYLOAD_PATH, PAYLOAD_BIN_MD5);
+	invalidateFileOnBadMd5(APP_PATH, APP_BIN_MD5);
+
+	download(PAYLOAD_PATH, PAYLOAD_URL, PAYLOAD_BIN_MD5);
+	download(APP_PATH, APP_URL, APP_BIN_MD5);
 
 	app.get('/payload.bin', (req, res) => {
-		console.log(req.ip + ' - ' + req.url);
+		console.log(`${req.ip} - ${req.url}`);
 		const file = path.join(__dirname, 'bin', 'payload.bin');
 		res.setHeader('Content-Type', 'application/octet-stream');
 		res.sendFile(file);
 	})
 	app.get('*', (req, res) => {
-		console.log(req.ip + ' - ' + req.url);
+		console.log(`${req.ip} - ${req.url}`);
 		const file = path.join(__dirname, 'bin', 'app.bin');
 		res.setHeader('Content-Type', 'application/octet-stream');
 		res.sendFile(file);
