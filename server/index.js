@@ -26,7 +26,7 @@ const PAYLOAD_PATH = path.join(__dirname, 'bin', 'payload.bin');
 const PAYLOAD_BIN_MD5 = '14e7cc0d16e72da007727581520047d5';
 const APP_URL = 'https://github.com/kendallgoto/switchbota/releases/latest/download/app.bin';
 const APP_PATH = path.join(__dirname, 'bin', 'app.bin');
-const APP_BIN_MD5 = 'TODO-GET-UPDATED-APP-BIN-MD5';
+const APP_BIN_MD5 = 'cc9ec0df568b6e19da2096471ed8f531';
 (async function () {
 
 	function getFileHash(path) {
@@ -45,10 +45,8 @@ const APP_BIN_MD5 = 'TODO-GET-UPDATED-APP-BIN-MD5';
 	}
 
 	function invalidateFileOnBadMd5(path, md5) {
-		if (fs.existsSync(path))
-		{
-			if (getFileHash(path) != md5)
-			{
+		if (fs.existsSync(path)) {
+			if (getFileHash(path) != md5) {
 				deleteInvalidFile(path);
 			}
 		}
@@ -62,9 +60,8 @@ const APP_BIN_MD5 = 'TODO-GET-UPDATED-APP-BIN-MD5';
 				res.pipe(result);
 				result.on('finish', () => {
 					result.close();
-					if (getFileHash(path) != md5)
-					{
-						throw(`Download error: file ${path} does not match the expected md5 hash of ${md5}`);
+					if (getFileHash(path) != md5) {
+						throw (`Download error: file ${path} does not match the expected md5 hash of ${md5}`);
 					}
 				});
 			});
