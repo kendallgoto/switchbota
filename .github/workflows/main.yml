@@ -1,10 +1,6 @@
-name: SwitchBOTA app.bin build
+name: SwitchbOTA app.bin build
 
-on:
-  push:
-    branches:
-      - main
-      - 'releases/**'
+on: push
 
 jobs:
   build:
