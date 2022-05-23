@@ -1,0 +1,24 @@
+name: SwitchbOTA app.bin build
+
+on: push
+
+jobs:
+  build:
+  
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repo
+      uses: actions/checkout@v2
+      with:
+        submodules: 'recursive'
+    - name: esp-idf build
+      uses: espressif/esp-idf-ci-action@main
+      with:
+        esp_idf_version: v4.4
+        target: esp32c3
+        path: 'espressif'
+    - uses: actions/upload-artifact@v3
+      with:
+        name: app.bin
+        path: espressif/build/switchbota.bin
