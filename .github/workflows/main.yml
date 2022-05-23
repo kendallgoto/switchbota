@@ -20,5 +20,5 @@ jobs:
         path: 'espressif'
     - uses: actions/upload-artifact@v3
       with:
-        name: app-bin-files
-        path: espressif/build/*
+        name: app.bin
+        path: espressif/build/switchbota.bin
