@@ -7,5 +7,4 @@ region,			data,	253,		0x14000,	4K,
 factory_nvs,	data,	nvs,		0x15000,	16K,
 energydata,		data,	fat,		0x19000,	24K,
 ota_0,			app,	ota_0,		0x20000,	1904K,
-# ESP32C3 used in this product only has 2MB flash, not 4MB.
-#ota_1,			app,	ota_1,		0x220000,	1904K,		
+ota_1,			app,	ota_1,		0x220000,	1904K,		
