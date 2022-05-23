@@ -21,4 +21,7 @@ jobs:
     - uses: actions/upload-artifact@v3
       with:
         name: app.bin
-        path: espressif/build/switchbota.bin
+        path: |
+          espressif/build/bootloader/bootloader.bin
+          espressif/build/partition_table/partition-table.bin
+          espressif/build/switchbota.bin
