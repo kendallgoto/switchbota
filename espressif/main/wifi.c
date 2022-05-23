@@ -92,7 +92,7 @@ static void event_handler(void* arg, esp_event_base_t event_base,
         default:
             break;        
     }
-    return ESP_OK;
+    return;
 }
 int wifi_is_connected()
 {
