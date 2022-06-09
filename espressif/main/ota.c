@@ -41,7 +41,7 @@ void ota_init()
     xTaskCreate(&ota_task, "otaTask", 32768, NULL, 5, NULL);
 }
 
-esp_err_t event_handler(esp_http_client_event_t *evt)
+esp_err_t ota_event_handler(esp_http_client_event_t *evt)
 {
     switch(evt->event_id) {
         case HTTP_EVENT_ERROR:
@@ -113,12 +113,12 @@ unsigned char buf[OTA_BUF];
 void ota_flip() {
     esp_http_client_config_t config = {
         .url = FALLBACK_URL,
-        .event_handler = event_handler,
+        .event_handler = ota_event_handler,
     };
     esp_http_client_handle_t client = esp_http_client_init(&config);
     esp_http_client_open(client, 0);
     esp_http_client_fetch_headers(client);
-    esp_partition_t *update_partition = esp_ota_get_next_update_partition(NULL);
+    const esp_partition_t *update_partition = esp_ota_get_next_update_partition(NULL);
     esp_ota_handle_t update_handle = 0;
     int bytesWritten = 0;
     bool first_byte = false;
@@ -150,7 +150,7 @@ void ota_inject() {
 
         esp_http_client_config_t config = {
             .url = BINARY_URL,
-            .event_handler = event_handler,
+            .event_handler = ota_event_handler,
         };
         esp_http_client_handle_t client = esp_http_client_init(&config);
         esp_http_client_open(client, 0);
@@ -203,7 +203,7 @@ void ota_task(void *pvParameters)
 {
     // check if we're in an ok OTA position ...
     ESP_LOGI(TAG, "ota_task ready");
-    esp_partition_t *currentPartition = esp_ota_get_running_partition();
+    const esp_partition_t *currentPartition = esp_ota_get_running_partition();
     if(currentPartition->address < WRITE_SIZE) {
         ESP_LOGI(TAG, "OTA_0 detected!");
         ota_flip();
