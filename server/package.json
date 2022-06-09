@@ -9,7 +9,9 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "async": "^3.2.3",
     "express": "^4.17.3",
-    "follow-redirects": "^1.14.9"
+    "follow-redirects": "^1.14.9",
+    "native-dns": "^0.7.0"
   }
 }
