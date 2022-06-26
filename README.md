@@ -43,3 +43,6 @@ The included ESP-IDF code is a lightweight OTA client that directly writes to th
 WiFi configuration is read from the device's NVS memory by the Espressif binary. This should be configured in the SwitchBot app prior to the process. If, for whatever reason, it is lost, the binary will make a fallback connection to SSID `switchbota`, password `switchbota`. You may need to create this SSID to recover the device.
 
 If you're already on the latest version of the official firmware, you won't be able to begin the OTA process from the app. If this is the case, you can manually start the process by sending bluetooth signals directly to the plug. Read [here](https://github.com/kendallgoto/switchbota/issues/3#issuecomment-1121864522) for more information.
+
+## Donations
+To support my work, consider making a purchase from SwitchBot using my [affiliate link](https://us.switch-bot.com/?sca_ref=2185819.iOqi8Gnz5f).
