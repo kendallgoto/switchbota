@@ -21,59 +21,66 @@ const { https } = require('follow-redirects');
 const fs = require('fs');
 const crypto = require('crypto');
 const dns = require('native-dns');
-const dns_server = dns.createServer();
 const async = require('async');
+let LOCAL_IP = "0.0.0.0"
+const PUBLIC_DNS = "8.8.8.8"
 
+function startDns() {
+	const dns_server = dns.createServer();
+	let authority = { address: PUBLIC_DNS, port: 53, type: 'udp' };
+	function dns_proxy(question, response, cb) {
+		console.log('looking up ' + question.name);
+		var request = dns.Request({
+			question: question,
+			server: authority,
+			timeout: 1000
+		});
+		request.on('message', (err, msg) => {
+			msg.answer.forEach(a => response.answer.push(a));
+		});
+		request.on('end', cb);
+		request.send();
+	}
+
+	let entries = [{
+		domain: ".*wohand\.com$",
+		records: [{ type: "A", address: LOCAL_IP, ttl: 60 }]
+	}];
+	function handleDNSRequest(request, response) {
+		console.log('request from', request.address.address, 'for', request.question[0].name);
+		let f = []; // array of functions
+		request.question.forEach(question => {
+			let entry = entries.filter(r => new RegExp(r.domain, 'i').exec(question.name));
+			if (entry.length) {
+				entry[0].records.forEach(record => {
+					record.name = question.name;
+					record.ttl = record.ttl || 1800;
+					response.answer.push(dns[record.type](record));
+				});
+			} else {
+				f.push(cb => dns_proxy(question, response, cb));
+			}
+		});
+		// do the proxying in parallel
+		// when done, respond to the request by sending the response
+		async.parallel(f, function () { response.send(); });
+	}
+	dns_server.on('request', handleDNSRequest);
+	dns_server.on('listening', () => console.log('server listening on', dns_server.address()));
+	dns_server.on('close', () => console.log('server closed', dns_server.address()));
+	dns_server.on('error', (err, buff, req, res) => console.error(err.stack));
+	dns_server.on('socketError', (err, socket) => console.error(err));
+	dns_server.serve(53);
+}
+
+const args = process.argv.slice(2);
+if (args.length) {
+	LOCAL_IP = args[0]
+	console.log("Starting with DNS server forwarding wohand.com to " + LOCAL_IP)
+	startDns()
+}
 // You can temporarily set your router's DNS to the host this host's IP
 // and it will correctly take care of wohand.com resolution.
-let authority = { address: '8.8.8.8', port: 53, type: 'udp' };
-function dns_proxy(question, response, cb) {
-  console.log('proxying', question.name);
-  var request = dns.Request({
-    question: question, // forwarding the question
-    server: authority,  // this is the DNS server we are asking
-    timeout: 1000
-  });
-  // when we get answers, append them to the response
-  request.on('message', (err, msg) => {
-    msg.answer.forEach(a => response.answer.push(a));
-  });
-  request.on('end', cb);
-  request.send();
-}
-
-// !!!! IMPORTANT !!!! Replace YOUR_IP_HERE with your local IP.
-
-let entries = [{
-  domain: ".*wohand\.com$",
-  records: [{ type: "A", address: "YOUR_IP_HERE", ttl: 60 }]
-}];
-function handleDNSRequest(request, response) {
-  console.log('request from', request.address.address, 'for', request.question[0].name);
-  let f = []; // array of functions
-  request.question.forEach(question => {
-    let entry = entries.filter(r => new RegExp(r.domain, 'i').exec(question.name));
-    if (entry.length) {
-      entry[0].records.forEach(record => {
-        record.name = question.name;
-        record.ttl = record.ttl || 1800;
-        response.answer.push(dns[record.type](record));
-      });
-    } else {
-      f.push(cb => dns_proxy(question, response, cb));
-    }
-  });
-  // do the proxying in parallel
-  // when done, respond to the request by sending the response
-  async.parallel(f, function() { response.send(); });
-}
-dns_server.on('request', handleDNSRequest);
-dns_server.on('listening', () => console.log('server listening on', dns_server.address()));
-dns_server.on('close', () => console.log('server closed', dns_server.address()));
-dns_server.on('error', (err, buff, req, res) => console.error(err.stack));
-dns_server.on('socketError', (err, socket) => console.error(err));
-dns_server.serve(53);
-
 const PAYLOAD_URL = 'https://github.com/arendst/Tasmota/releases/download/v11.1.0/tasmota32c3.factory.bin';
 const PAYLOAD_PATH = path.join(__dirname, 'bin', 'payload.bin');
 const PAYLOAD_BIN_MD5 = '14e7cc0d16e72da007727581520047d5';

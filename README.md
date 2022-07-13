@@ -9,7 +9,7 @@ Writing to the bootloader over OTA is dangerous and not normally done for good r
 This is a proof of concept and provided with no warranty.
 
 ## Pre-reqs
-In order to have the factory firmware download our custom firmware, you'll need to modify your local DNS to serve the desired binary. Specifically, `www.wohand.com` should point to a local machine running the included [web server](/server). If you don't know what this means, read [here](https://github.com/kendallgoto/switchbota/issues/3#issuecomment-1121828064) for more information.
+In order to have the factory firmware download our custom firmware, you'll need to modify your local DNS to serve the desired binary. Specifically, `www.wohand.com` should point to a local machine running the included [web server](/server). If you don't know what this means, read [here](https://github.com/kendallgoto/switchbota/issues/3#issuecomment-1121828064) for more information. A DNS server is included in the server applet as well, however, you still must configure your local router to serve the correct address. See the [server/ README](/server/README.md) for more information.
 
 ## Install
 1. Setup the [web server](/server) to serve the desired OTA binaries to your device.
