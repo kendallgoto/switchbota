@@ -9,7 +9,7 @@ Writing to the bootloader over OTA is dangerous and not normally done for good r
 This is a proof of concept and provided with no warranty.
 
 ## Pre-reqs
-In order to have the factory firmware download our custom firmware, you'll need to modify your local DNS to serve the desired binary. Specifically, `www.wohand.com` should point to a local machine running the included [web server](/server). If you don't know what this means, read [here](https://github.com/kendallgoto/switchbota/issues/3#issuecomment-1121828064) for more information.
+In order to have the factory firmware download our custom firmware, you'll need to modify your local DNS to serve the desired binary. Specifically, `www.wohand.com` should point to a local machine running the included [web server](/server). If you don't know what this means, read [here](https://github.com/kendallgoto/switchbota/issues/3#issuecomment-1121828064) for more information. A DNS server is included in the server applet as well, however, you still must configure your local router to serve the correct address. See the [server/ README](/server/README.md) for more information.
 
 ## Install
 1. Setup the [web server](/server) to serve the desired OTA binaries to your device.
@@ -43,3 +43,6 @@ The included ESP-IDF code is a lightweight OTA client that directly writes to th
 WiFi configuration is read from the device's NVS memory by the Espressif binary. This should be configured in the SwitchBot app prior to the process. If, for whatever reason, it is lost, the binary will make a fallback connection to SSID `switchbota`, password `switchbota`. You may need to create this SSID to recover the device.
 
 If you're already on the latest version of the official firmware, you won't be able to begin the OTA process from the app. If this is the case, you can manually start the process by sending bluetooth signals directly to the plug. Read [here](https://github.com/kendallgoto/switchbota/issues/3#issuecomment-1121864522) for more information.
+
+## Donations
+To support my work, consider making a purchase from SwitchBot using my [affiliate link](https://us.switch-bot.com/?sca_ref=2185819.iOqi8Gnz5f).
