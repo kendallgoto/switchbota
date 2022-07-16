@@ -3,6 +3,13 @@ Replaces the default firmware on the SwitchBot Plug Mini via OTA, enabling the u
 
 Similar to [Espressif2Arduino](https://github.com/khcnz/Espressif2Arduino).
 
+## Compatible Versions
+SwitchbOTA has been tested to work on the two current existing US plug revisions:
+- W1901400 (Original US Plug Mini, March 2022)
+- [W1901401](https://github.com/kendallgoto/switchbota/issues/19) (HomeKit US Plug Mini, June 2022)
+
+Running SwitchbOTA has been tested on v1.4 and lower. You may want to downgrade to V1.4 or lower before starting the process.
+
 ## Disclaimer
 Writing to the bootloader over OTA is dangerous and not normally done for good reason. If your device loses power or somehow flashes corrupted data, the device will be bricked and require disassembly to reprogram the device. Only perform this process if you are comfortable disassembling your plug to fix it if it breaks! Of course, do not unplug or otherwise disturb the plug while it is performing the OTA.
 
@@ -45,4 +52,4 @@ WiFi configuration is read from the device's NVS memory by the Espressif binary.
 If you're already on the latest version of the official firmware, you won't be able to begin the OTA process from the app. If this is the case, you can manually start the process by sending bluetooth signals directly to the plug. Read [here](https://github.com/kendallgoto/switchbota/issues/3#issuecomment-1121864522) for more information.
 
 ## Donations
-To support my work, consider making a purchase from SwitchBot using my [affiliate link](https://us.switch-bot.com/?sca_ref=2185819.iOqi8Gnz5f).
+To support my work, consider making a purchase from SwitchBot using my [affiliate link](https://us.switch-bot.com/?sca_ref=2185819.iOqi8Gnz5f). Alternatively, please see my sponsor page [here](https://github.com/sponsors/kendallgoto).
