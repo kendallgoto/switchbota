@@ -143,14 +143,14 @@ const APP_BIN_MD5 = 'cc9ec0df568b6e19da2096471ed8f531';
 		console.log(`${req.ip} - ${req.url}`);
 		const file = path.join(__dirname, 'bin', 'payload.bin');
 		res.setHeader('Content-Type', 'application/octet-stream');
-		res.sendFile(file);
+		res.sendFile(file, () => { console.log('Sending payload.bin complete.'); });
 	});
 
 	app.get('*', (req, res) => {
 		console.log(`${req.ip} - ${req.url}`);
 		const file = path.join(__dirname, 'bin', 'app.bin');
 		res.setHeader('Content-Type', 'application/octet-stream');
-		res.sendFile(file);
+		res.sendFile(file, () => { console.log('Sending app.bin complete.'); });
 	});
 
 	app.listen(port, () => {
