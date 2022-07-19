@@ -112,7 +112,7 @@ const APP_BIN_MD5 = 'cc9ec0df568b6e19da2096471ed8f531';
 		}
 	}
 
-	async function download(path, url, md5) {
+	function download(path, url, md5) {
 		if (!fs.existsSync(path)) {
 			console.log('Downloading missing binary ' + url);
 			https.get(url, (res) => {
