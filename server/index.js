@@ -147,6 +147,10 @@ const APP_BIN_MD5 = 'cc9ec0df568b6e19da2096471ed8f531';
 	});
 
 	app.get('*', (req, res) => {
+		// Request headers and user agent may be useful for determining what the app is requesting when
+		// checking for version information.  Disabled by default, uncomment if needed.
+		////console.log(`Request headers: ` + JSON.stringify(req.headers));
+		////console.log(`User agent: ${req.headers['user-agent']}`);
 		console.log(`${req.ip} - ${req.url}`);
 		const file = path.join(__dirname, 'bin', 'app.bin');
 		res.setHeader('Content-Type', 'application/octet-stream');
