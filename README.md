@@ -7,6 +7,7 @@ Similar to [Espressif2Arduino](https://github.com/khcnz/Espressif2Arduino).
 SwitchbOTA has been tested to work on the two current existing US plug revisions:
 - W1901400 (Original US Plug Mini, March 2022)
 - [W1901401](https://github.com/kendallgoto/switchbota/issues/19) (HomeKit US Plug Mini, June 2022)
+- W1401400 (Color Bulb E26, Date code: 2151)
 
 Running SwitchbOTA has been tested on v1.4 and lower. You may want to downgrade to V1.4 or lower before starting the process.
 
@@ -25,12 +26,15 @@ In order to have the factory firmware download our custom firmware, you'll need 
 4. Connect to the Tasmota hotspot and configure!
 
 ## Tasmota Setup
-Currently, Tasmota's support for the ESP32-C3 is unofficial. However, power monitoring and MQTT delivery works effectively with the following template:
+Tasmota fully supports ESP32-C3. Power monitoring and MQTT delivery works effectively with the following template:
 
 ```json
 {"NAME":"W1901400","GPIO":[0,0,32,0,0,0,224,320,321,0,0,0,0,0,0,0,0,0,2720,2656,2624,0],"FLAG":0,"BASE":1}
 ```
-[More Template information](https://templates.blakadder.com/switchbot_plugmini_W1901400.html)
+
+[US Plug Mini template](https://templates.blakadder.com/switchbot_plugmini_W1901400.html)
+[JP Homekit Plug Mini template](https://templates.blakadder.com/switchbot_W2001401.html)
+[Color Bulb template](https://templates.blakadder.com/switchbot_W1401400.html)
 
 [How to use a template?](https://templates.blakadder.com/howto.html)
 
