@@ -4,9 +4,10 @@ Replaces the default firmware on the SwitchBot Plug Mini via OTA, enabling the u
 Similar to [Espressif2Arduino](https://github.com/khcnz/Espressif2Arduino).
 
 ## Compatible Versions
-SwitchbOTA has been tested to work on the two current existing US plug revisions:
+SwitchbOTA has been tested to work on the following Switchbot devices:
 - W1901400 (Original US Plug Mini, March 2022)
 - [W1901401](https://github.com/kendallgoto/switchbota/issues/19) (HomeKit US Plug Mini, June 2022)
+- [W2001401](https://github.com/kendallgoto/switchbota/issues/27) (HomeKit JP Plug Mini, July 2022)
 - W1401400 (Color Bulb E26, Date code: 2151)
 
 Running SwitchbOTA has been tested on v1.4 and lower. You may want to downgrade to V1.4 or lower before starting the process.
