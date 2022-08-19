@@ -94,60 +94,71 @@ const APP_BIN_MD5 = 'cc9ec0df568b6e19da2096471ed8f531';
 		return md5Hasher.update(fs.readFileSync(path)).digest('hex');
 	}
 
-	function deleteInvalidFile(path) {
-		try {
-			console.log(`Deleting invalidated file: ${path}`);
-			fs.unlinkSync(path);
-		} catch (error) {
-			console.log(`Error deleting invalidated file ${path}`);
-			console.log(`Error: ${error}`);
-		}
-	}
-
-	function invalidateFileOnBadMd5(path, md5) {
-		if (fs.existsSync(path)) {
-			if (getFileHash(path) != md5) {
-				deleteInvalidFile(path);
-			}
-		}
-	}
-
-	async function download(path, url, md5) {
-		if (!fs.existsSync(path)) {
-			console.log('Downloading missing binary ' + url);
-			https.get(url, (res) => {
-				const result = fs.createWriteStream(path);
-				res.pipe(result);
-				result.on('finish', () => {
-					result.close();
-					if (getFileHash(path) != md5) {
-						throw (`Download error: file ${path} does not match the expected md5 hash of ${md5}`);
+	function download(path, url, md5) {
+		return new Promise((resolve, reject) => {
+			if (fs.existsSync(path)) {
+				if (getFileHash(path) == md5) {
+					resolve();
+				} else {
+					try {
+						console.log(`Deleting invalidated file: ${path}`);
+						fs.unlinkSync(path);
+					} catch (error) {
+						console.log(`Error deleting invalidated file ${path}`);
+						console.log(`Error: ${error}`);
+						reject(`Unable to delete invalid file: ${path}`);
 					}
+				}
+			}
+
+			if (!fs.existsSync(path)) {
+				console.log('Downloading missing binary ' + url);
+				https.get(url, (res) => {
+					const result = fs.createWriteStream(path);
+					res.pipe(result);
+					result.on('finish', () => {
+						result.close();
+						if (getFileHash(path) != md5) {
+							reject(`Download error: file ${path} does not match the expected md5 hash of ${md5}`);
+						}
+						resolve();
+					});
 				});
-			});
-		}
+			}
+		})
 	}
 
-	invalidateFileOnBadMd5(PAYLOAD_PATH, PAYLOAD_BIN_MD5);
-	invalidateFileOnBadMd5(APP_PATH, APP_BIN_MD5);
+	let payloadPromise = download(PAYLOAD_PATH, PAYLOAD_URL, PAYLOAD_BIN_MD5);
+	let appPromise = download(APP_PATH, APP_URL, APP_BIN_MD5);
 
-	download(PAYLOAD_PATH, PAYLOAD_URL, PAYLOAD_BIN_MD5);
-	download(APP_PATH, APP_URL, APP_BIN_MD5);
+	// Endpoint to allow people to verify firewall is not an issue without downloading a bin file every time.
+	app.get('/', (req, res) => {
+		res.send('Switchbota is listening and received a request for /');
+	});
 
 	app.get('/payload.bin', (req, res) => {
 		console.log(`${req.ip} - ${req.url}`);
 		const file = path.join(__dirname, 'bin', 'payload.bin');
 		res.setHeader('Content-Type', 'application/octet-stream');
-		res.sendFile(file);
-	})
+		res.sendFile(file, () => { console.log('Sending payload.bin complete.'); });
+	});
+
 	app.get('*', (req, res) => {
+		// Request headers and user agent may be useful for determining what the app is requesting when
+		// checking for version information.  Disabled by default, uncomment if needed.
+		////console.log(`Request headers: ` + JSON.stringify(req.headers));
+		////console.log(`User agent: ${req.headers['user-agent']}`);
 		console.log(`${req.ip} - ${req.url}`);
 		const file = path.join(__dirname, 'bin', 'app.bin');
 		res.setHeader('Content-Type', 'application/octet-stream');
-		res.sendFile(file);
+		res.sendFile(file, () => { console.log('Sending app.bin complete.'); });
 	});
 
-	app.listen(port, () => {
-		console.log(`Server listening on port ${port}`);
-	})
+	Promise.all([payloadPromise, appPromise]).then(() => {
+		app.listen(port, () => {
+			console.log(`Server listening on port ${port}`);
+		});
+	}).catch(err => {
+		console.error(err);
+	});
 })();
