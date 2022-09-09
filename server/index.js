@@ -22,6 +22,7 @@ const fs = require('fs');
 const crypto = require('crypto');
 const dns = require('native-dns');
 const async = require('async');
+const { Buffer } = require('node:buffer');
 let LOCAL_IP = "0.0.0.0"
 const PUBLIC_DNS = "8.8.8.8"
 
@@ -94,6 +95,10 @@ const APP_BIN_MD5 = 'cc9ec0df568b6e19da2096471ed8f531';
 		return md5Hasher.update(fs.readFileSync(path)).digest('hex');
 	}
 
+	function getFileSize(path) {
+		return fs.statSync(path).size;
+	}
+
 	function download(path, url, md5) {
 		return new Promise((resolve, reject) => {
 			if (fs.existsSync(path)) {
@@ -141,7 +146,18 @@ const APP_BIN_MD5 = 'cc9ec0df568b6e19da2096471ed8f531';
 		const file = path.join(__dirname, 'bin', 'payload.bin');
 		res.setHeader('Content-Type', 'application/octet-stream');
 		res.sendFile(file, () => { console.log('Sending payload.bin complete.'); });
-	});
+	})
+	app.get('/payload.info', (req, res) => {
+		console.log(`${req.ip} - ${req.url}`);
+		const file = path.join(__dirname, 'bin', 'payload.bin');
+		const hash = getFileHash(file);
+		const size = getFileSize(file);
+		res.setHeader('Content-Type', 'application/octet-stream');
+		const data = Buffer.allocUnsafe(20)
+		data.write(hash, 0, 16, 'hex');
+		data.writeUint32BE(size, 16);
+		res.send(data.subarray());
+	})
 
 	app.get('*', (req, res) => {
 		// Request headers and user agent may be useful for determining what the app is requesting when
