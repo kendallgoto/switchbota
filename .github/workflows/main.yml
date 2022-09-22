@@ -3,7 +3,7 @@ name: SwitchbOTA app.bin build
 on: push
 
 jobs:
-  build:
+  firmware-build:
   
     runs-on: ubuntu-latest
 
@@ -44,6 +44,7 @@ jobs:
       id: semvers
       uses: "WyriHaximus/github-action-next-semvers@v1"
       with:
+        strict: false
         version: ${{ steps.previoustag.outputs.tag }}
     - run: echo "app_version ${{ steps.semvers.outputs.patch }}"
   docker-build:
