@@ -1,0 +1,20 @@
+version: '3.7'
+services:
+   switchbota:
+    user: 1000:1000
+    hostname: switchbota
+    container_name: switchbota
+    image: ghcr.io/kendallgoto/switchbota/switchbota-server:latest
+    network_mode: "host"
+    ports:
+    - 80:80
+    environment: []
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: '0.50'
+          memory: 64M
+        reservations:
+          cpus: '0.25'
+          memory: 32M

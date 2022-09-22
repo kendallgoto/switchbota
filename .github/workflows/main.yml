@@ -9,7 +9,7 @@ jobs:
 
     steps:
     - name: Checkout repo
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3
       with:
         submodules: 'recursive'
     - name: esp-idf build
@@ -22,3 +22,62 @@ jobs:
       with:
         name: app.bin
         path: espressif/build/switchbota.bin
+  version: # this is to create the version for docker image
+    runs-on: ubuntu-latest
+    outputs:
+      app_version: ${{ steps.semvers.outputs.patch }} # set the app_version to be the PATCH updated version
+      tag: ${{ steps.semvers.outputs.v_patch }} # set the tag to be the PATCH updated version.
+    env:
+      GITHUB_TOKEN: "${{ github.token }}"
+    steps:
+    - uses: actions/checkout@v3
+      with:
+        fetch-depth: 0
+    # Get the current tag
+    - name: 'Get Previous tag'
+      id: previoustag
+      uses: "WyriHaximus/github-action-get-previous-tag@v1"
+      with:
+        fallback: 1.1.0 # Optional fallback tag to use when no tag can be found
+    # calculate the next version
+    - name: 'Get next minor version'
+      id: semvers
+      uses: "WyriHaximus/github-action-next-semvers@v1"
+      with:
+        version: ${{ steps.previoustag.outputs.tag }}
+    - run: echo "app_version ${{ steps.semvers.outputs.patch }}"
+  docker-build:
+    runs-on: ubuntu-latest
+    needs: version
+    steps:
+    - name: Prepare
+      id: prep
+      run: |
+        GHCR_IMAGE="ghcr.io/${{ github.repository }}/switchbota-server";
+
+        TAGS="${GHCR_IMAGE}:latest,${GHCR_IMAGE}:${{ needs.version.outputs.app_version }}";
+        echo ::set-output name=tags::${TAGS}
+
+    - name: Set up QEMU
+      uses: docker/setup-qemu-action@v2
+    - name: Set up Docker Buildx
+      id: buildx
+      uses: docker/setup-buildx-action@v2
+
+    - name: Login to GHCR
+      uses: docker/login-action@v2
+      with:
+        registry: ghcr.io
+         # this will use the user that is running the action. and will fail if they dont have permission
+        username: ${{ github.actor }}
+        password: ${{ github.token }}
+
+    - name: Build and Push GHCR
+      id: docker_build
+      uses: docker/build-push-action@v3
+      with:
+        push: true
+        build-args: |
+          PROJECT_NAME=switchbota-server
+          BUILD_VERSION=${{ needs.version.outputs.app_version }}
+        tags: ${{ steps.prep.outputs.tags }}

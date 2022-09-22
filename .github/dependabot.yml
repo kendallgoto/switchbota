@@ -1,0 +1,11 @@
+version: 2
+updates:
+  # Maintain dependencies for GitHub Actions
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "daily"
+  - package-ecosystem: "npm" # will create PR for package updates when it identifies new versions
+    directory: "/"
+    schedule:
+      interval: "daily"
