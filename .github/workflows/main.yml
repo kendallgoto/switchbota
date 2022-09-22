@@ -77,7 +77,7 @@ jobs:
       id: docker_build
       uses: docker/build-push-action@v3
       with:
-        context: ./server
+        context: ./server/Dockerfile
         push: true
         build-args: |
           PROJECT_NAME=switchbota-server
