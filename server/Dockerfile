@@ -13,4 +13,6 @@ RUN \
 
 WORKDIR /app
 
+EXPOSE 80
+
 ENTRYPOINT "node" "/app/index.js"
