@@ -6,6 +6,8 @@ services:
     container_name: switchbota
     image: ghcr.io/kendallgoto/switchbota/switchbota-server:latest
     network_mode: "bridge"
+    # uncomment and change the ip to use integrated DNS
+    # command: 192.168.1.105
     ports:
     - 80:2180
     environment: []
