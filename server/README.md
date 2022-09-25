@@ -29,20 +29,25 @@ The other uses `2180` and is meant to be used in conjunction with nginx (or some
 See [How to configure a docker nginx reverse proxy](https://www.theserverside.com/blog/Coffee-Talk-Java-News-Stories-and-Opinions/Docker-Nginx-reverse-proxy-setup-example) for help and example on how to do this.
 #### SAMPLE NGINX CONFIG
 ```
+
 upstream switchbota_app {
-	server 192.168.1.123:2180;
+  server 192.168.1.123:2180;
 }
 
 server {
-	listen 80 default_server;
-	server_name _;
-
+	listen 80;
+	server_name wohand.com 
+	server_name www.wohand.com 
+	server_name a.wohand.com; # wohand.com original DNS is set to CNAME a.wohand.com
 	location / {
-		resolver 192.168.1.3;
+		resolver 192.168.1.1; # Your DNS
 
+		proxy_http_version  1.1;
 		proxy_set_header Host $host;
 		proxy_set_header X-Real-IP $remote_addr;
 		proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+		proxy_set_header Upgrade $http_upgrade;
+		proxy_set_header Connection "upgrade";
 
 		proxy_pass http://switchbota_app;
 	}
