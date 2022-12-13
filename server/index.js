@@ -22,7 +22,7 @@ const fs = require('fs');
 const crypto = require('crypto');
 const dns = require('native-dns');
 const async = require('async');
-const { Buffer } = require('node:buffer');
+const { Buffer } = require('buffer');
 let LOCAL_IP = "0.0.0.0"
 const PUBLIC_DNS = "8.8.8.8"
 
