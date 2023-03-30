@@ -10,7 +10,7 @@ SwitchbOTA has been tested to work on the following Switchbot devices:
 - [W2001401](https://github.com/kendallgoto/switchbota/issues/27) (HomeKit JP Plug Mini, June 2022)
 - W1401400 (Color Bulb E26, Date code: 2151)
 
-Running SwitchbOTA has been tested on v1.4 and lower. You may want to downgrade to V1.4 or lower before starting the process.
+Running SwitchbOTA has been tested on v1.5 and lower. You may want to downgrade to V1.5 or lower before starting the process.
 
 ## Disclaimer
 Writing to the bootloader over OTA is dangerous and not normally done for good reason. If your device loses power or somehow flashes corrupted data, the device will be bricked and require disassembly to reprogram the device. Only perform this process if you are comfortable disassembling your plug to fix it if it breaks! Of course, do not unplug or otherwise disturb the plug while it is performing the OTA.
