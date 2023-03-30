@@ -33,6 +33,12 @@
 
 static const char *TAG = "ota";
 
+struct OtaPayloadInfo
+{
+	uint8_t		hash[ 16u ];
+	uint32_t	size;
+};
+
 static void ota_task(void *pvParameters);
 void ota_init()
 {
@@ -46,6 +52,9 @@ esp_err_t ota_event_handler(esp_http_client_event_t *evt)
     switch(evt->event_id) {
         case HTTP_EVENT_ERROR:
             ESP_LOGE(TAG, "HTTP_EVENT_ERROR");
+			if (evt->user_data != NULL) {
+				*(bool*)evt->user_data = true;
+			}
             break;
         case HTTP_EVENT_ON_CONNECTED:
             ESP_LOGI(TAG, "HTTP_EVENT_ON_CONNECTED");
@@ -108,6 +117,7 @@ int verify_checksum(unsigned char *result, unsigned char *comparison)
     return equal;
 }
 
+struct OtaPayloadInfo info;
 unsigned char buf[OTA_BUF];
 
 void ota_flip() {
@@ -144,7 +154,49 @@ void ota_flip() {
     esp_restart();
 }
 
+bool ota_read_info() {
+	bool hasError = false;
+	const esp_http_client_config_t config = {
+		.url = INFO_URL,
+		.event_handler = ota_event_handler,
+		.user_data = &hasError
+	};
+	esp_http_client_handle_t client = esp_http_client_init(&config);
+	const esp_err_t openResult = esp_http_client_open(client, 0);
+	if (openResult != ESP_OK) {
+		ESP_LOGE(TAG, "Failed to open info HTTP request. Error: %d", openResult);
+		return false;
+	}
+	esp_http_client_fetch_headers(client);
+	int totalBytes = esp_http_client_get_content_length(client);
+	int readBytes = 0;
+
+	int count;
+	uint8_t* pTargetData = (uint8_t*)&info;
+	while(readBytes < sizeof( info ) && (count = esp_http_client_read(client, (char*)buf, OTA_BUF)) > 0)
+	{
+		const size_t size = readBytes + count > sizeof( info ) ? sizeof( info ) - readBytes : count;
+		memcpy( pTargetData + readBytes, buf, size );
+
+		readBytes += size;
+		ESP_LOGI(TAG, "read info %d / %d bytes", readBytes, totalBytes);
+		vTaskDelay(20 / portTICK_PERIOD_MS);
+	}
+
+	esp_http_client_close(client);
+	esp_http_client_cleanup(client);
+
+	return !hasError && readBytes == sizeof( info );
+}
+
 void ota_inject() {
+		if( !ota_read_info() )
+		{
+			ESP_LOGE(TAG, "Info BAD, retrying ...");
+            vTaskDelay(5000 / portTICK_PERIOD_MS);
+			return;
+		}
+
         ESP_LOGI(TAG, "erasing bootloader! don't lose power now!");
         ESP_ERROR_CHECK( esp_flash_erase_region(NULL, 0, WRITE_SIZE) );
 
@@ -172,7 +224,7 @@ void ota_inject() {
         MD5Final(hashData, &hashCalculate);
         esp_http_client_close(client);
         esp_http_client_cleanup(client);
-        if(verify_checksum(hashData, BINARY_MD5)) {
+        if(verify_checksum(hashData, info.hash)) {
             ESP_LOGI(TAG, "Download MD5 OK, verifying SPI");
             // verify written data from SPI
             struct MD5Context spiMD5 = { 0 };
@@ -187,7 +239,7 @@ void ota_inject() {
                 vTaskDelay(20 / portTICK_PERIOD_MS);
             }
             MD5Final(spiHashData, &spiMD5);
-            if(verify_checksum(spiHashData, BINARY_MD5)) {
+            if(verify_checksum(spiHashData, info.hash)) {
                 ESP_LOGI(TAG, "SPI Write OK - restarting ...");
                 esp_restart();
             } else {
