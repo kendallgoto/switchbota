@@ -7,6 +7,7 @@ Similar to [Espressif2Arduino](https://github.com/khcnz/Espressif2Arduino).
 SwitchbOTA has been tested to work on the two current existing US plug revisions:
 - W1901400 (Original US Plug Mini, March 2022)
 - [W1901401](https://github.com/kendallgoto/switchbota/issues/19) (HomeKit US Plug Mini, June 2022)
+- W1901400 (Japanese version, SwitchBot プラグミニ, July 2022)
 
 Running SwitchbOTA has been tested on v1.4 and lower. You may want to downgrade to V1.4 or lower before starting the process.
 
