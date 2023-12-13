@@ -1,7 +1,12 @@
+
 # SwitchbOTA
+![51HjLj15OZL _SL1500_](https://github.com/kubedzero/switchbota/assets/51148401/0bdf7ae9-9eaf-4698-819e-78625adce8fc)
+
 This project helps to replace the default firmware on the SwitchBot Smart Plug Mini via an OTA update, enabling the use of Tasmota open-source firmware without disassembling the device.
 
 ## SwitchBot Hardware Details
+
+
 
 There are two SKUs of the SwitchBot Smart Plug Mini released in the US: 
 
@@ -32,6 +37,10 @@ Writing to the bootloader over OTA is dangerous and not normally done for good r
 - In-app, add a device. It's safe to connect it to your WiFi network. 
   - Note down the BLE-MAC during this process, as it will be referenced later
   - This step uses Bluetooth Low Energy (BLE) to scan for devices and send the WiFi network information
+
+![switchbot](https://github.com/kubedzero/switchbota/assets/51148401/3d6c8171-fc69-472e-be4a-0ceac03e040e)
+
+
 - In-app, check the device firmware by going to its settings. As of 2023-12, there was no firmware update button, and the firmware version was v1.4. If you do see the upgrade button, do not press it and wait for a later part
 - DONE! The plug is now ready for the firmware flashing process
 
@@ -42,7 +51,9 @@ Writing to the bootloader over OTA is dangerous and not normally done for good r
 - Configure your router and/or DNS to redirect calls to SwitchBot servers to instead hit your NodeJS server
   - This means that a DNS override or custom DNS record should be added, redirecting both `www.wohand.com` and `wohand.com` to the IP where the NodeJS server will be run. More detail can be found at https://github.com/kendallgoto/switchbota/issues/3#issuecomment-1121828064
   - In pfSense, this can be done in the Services->DNS Resolver or Forwarder by adding a Host Override with Host `www` and Domain `wohand.com` and a second override with Host `wohand` and Domain `com`, both having an IP of 192.168.0.69. Save the override and Apply the settings
-  - In PiHole, this can be done in the Local DNS->DNS Records by setting the Domain to `www.wohand.com` and `wohand.com` and the IP to 192.168.0.69
+
+![pfsense](https://github.com/kubedzero/switchbota/assets/51148401/09eaeb29-5fa1-47dd-845f-d5c9f244c2f1)
+   - In PiHole, this can be done in the Local DNS->DNS Records by setting the Domain to `www.wohand.com` and `wohand.com` and the IP to 192.168.0.69
   - If your router does not support custom DNS entries, it will almost certainly support setting a custom DNS server. This may be found in the DHCP settings or the System settings. Set the custom DNS server to 192.168.0.69
 - Run a local NodeJS server to act in place of the real firmware update server and instead deliver modified firmware files: firstly the OTA file, and then the Tasmota firmware file
   - Install NodeJS on your computer https://nodejs.org/en/learn/getting-started/how-to-install-nodejs
@@ -61,9 +72,18 @@ Writing to the bootloader over OTA is dangerous and not normally done for good r
 - Install an app such as [nRF Connect for Mobile](https://play.google.com/store/apps/details?id=no.nordicsemi.android.mcp). This will be used to connect to the Bluetooth Low Energy (BLE) radio of the plug to trigger the firmware update process. [Bluetility for Mac](https://github.com/jnross/Bluetility) is also reported to work
 - Follow the instructions below, or watch [the video](https://youtu.be/iTexFQ0Th0I?si=zB-leDeiz82yL9Cy&t=635), or read the GitHub issues outlining the process https://github.com/kendallgoto/switchbota/issues/43  https://github.com/kendallgoto/switchbota/issues/3#issuecomment-1121864522
 - Using the BLE app of choice, scan for devices and Connect to the device matching the BLE-MAC noted from the SwitchBot app
-- Make sure the app is on the Client tab, then expand "Unknown Service" and look at the options within. The last option, "Unknown Characteristic" should have Properties such as "WRITE" and an upload button on the right side
-- Hit the Upload button on the right side to bring up the Write screen. Select the BYTE_ARRAY type from the dropdown and enter in the hex code `57 0F 0A 01 0C` (without spaces). Then it Send to transmit the command to the plug
-  - The last two characters represent the firmware version to be flashed, and must be different from the current firmware version. `0C` (as shown above) represents v1.2, `0D` represents v1.3, `0E` represents v1.4. `0C` should be safe to use by default. More detail can be found [here](https://github.com/kendallgoto/switchbota/issues/3#issuecomment-1491004013)
+
+![nrf1](https://github.com/kubedzero/switchbota/assets/51148401/a34b5b6e-c1ac-4f8c-9b68-e89858280f32)
+
+- Make sure the app is on the Client tab, then expand "Unknown Service" and look at the options within. The last option, "Unknown Characteristic" should have Properties such as "WRITE" and an upload button on the right side. Hit the Upload button on the right side to bring up the Write screen.
+
+![nrf2](https://github.com/kubedzero/switchbota/assets/51148401/c3f5a073-bc23-4cf2-a2f8-a926bfd45af7)
+
+- Select the BYTE_ARRAY type from the dropdown and enter in the hex code `57 0F 0A 01 0C` (without spaces). Then it Send to transmit the command to the plug
+  - The last two characters represent the firmware version to be flashed, and must be different from the current firmware version. `0C` (as shown above) represents v1.2, `0D` represents v1.3, `0E` represents v1.4. `0C` should be safe to use by default. More detail can be found [here](https://github.com/kendallgoto/switchbota/issues/3#issuecomment-1491004013) 
+
+![nrf3](https://github.com/kubedzero/switchbota/assets/51148401/93533e16-bc48-40b6-90af-c89f98381f54)
+
 - Wait a few seconds and look at the NodeJS log to verify the command worked as it should. You should see something such as `::ffff:192.168.0.131 - /version/wocaotech/firmware/WoPlugUS/WoPlugUS_V12.bin` which indicates the NodeJS server was able to send the first `.bin` file to the plug
 - Wait about a minute after seeing the NodeJS server log to give the plug time to get ready for the next step.
 - Now send a new BYTE_ARRAY command in the BLE app (nRF Connect) with hex `57 0F 0B`. Hit Send to trigger the second and final firmware flash step
@@ -81,6 +101,10 @@ Writing to the bootloader over OTA is dangerous and not normally done for good r
   - `{"NAME":"SwitchBot Smart Plug Mini W1901400","GPIO":[0,0,32,0,0,0,224,320,321,0,0,0,0,0,0,0,0,0,2720,2656,2624,0],"FLAG":0,"BASE":1}`
   - The template can also be found on the Tasmota device repository https://templates.blakadder.com/switchbot_plugmini_W1901400.html
   - The `GPIO` numbers refer to the different GPIO device IDs, found at https://tasmota.github.io/docs/Components/.  The `BASE` refers to a base template, which in this case is 1 or `ESP32C3`
+
+
+![template](https://github.com/kubedzero/switchbota/assets/51148401/3e4d6b0a-98c0-415a-9f28-f7cc46addc0b)
+
 - Optionally perform the Power Calibration following the instructions in https://tasmota.github.io/docs/Power-Monitoring-Calibration/
   - I used a Kill-a-watt and a portable space heater or hair dryer after confirming it was in a mode that had a Power Factor of 0.99 or 1.0. 
   - I then used the Kill-a-watt to note the voltage, wattage, and amperage (in my case, 122.3V, 778W, 6.36A)
@@ -89,6 +113,9 @@ Writing to the bootloader over OTA is dangerous and not normally done for good r
   - USA East Coast command is `Backlog0 Timezone 99; TimeStd 0,1,11,1,2,-300; TimeDst 0,2,3,1,2,-240`
   - USA Pacific command is `Backlog0 Timezone 99; TimeStd 0,1,11,1,2,-480; TimeDst 0,2,3,1,2,-420`
 - DONE! The SwitchBot Smart Plug Mini is now fully configured and ready to enter service
+
+![tasmota](https://github.com/kubedzero/switchbota/assets/51148401/635c29be-86c0-47f4-8749-8bd3b6b146d2)
+
 
 
 
