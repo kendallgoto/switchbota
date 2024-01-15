@@ -1,6 +1,6 @@
 
 # SwitchbOTA
-![51HjLj15OZL _SL1500_](https://github.com/kubedzero/switchbota/assets/51148401/0bdf7ae9-9eaf-4698-819e-78625adce8fc)
+![switchbot-product-photo](./images/switchbot-product-photo.jpg)
 
 This project helps to replace the default firmware on the SwitchBot Smart Plug Mini via an OTA update, enabling the use of Tasmota open-source firmware without disassembling the device.
 
@@ -19,9 +19,8 @@ Some details about the devices are as follows:
 - They use Type B NEMA 5-15 plugs and sockets
 - They are ultrasonically welded shut, requiring destruction of the plastic housing to access the circuits within. There are no screws to allow access to the internals, the way there is with the Sonoff S31
 - They use the Shanghai Belling BL0937 energy measurement IC to track power usage
-- They use the Espressif ESP32-C3 chip for WiFi, Bluetooth Low Energy (BLE), and circuit control. See [here](https://tasmota.github.io/docs/ESP32/#esp32-differences) to learn about the different types of ESP32
+- They use the Espressif ESP32-C3 chip for WiFi, Bluetooth Low Energy (BLE), and circuit control. See [here](https://tasmota.github.io/docs/ESP32/#esp32-differences) to learn about the different types of ESP32. The MAC addresses for WiFi and BLE follow the [ESP32 standard](https://docs.espressif.com/projects/esp-idf/en/latest/esp32c3/api-reference/system/misc_system_api.html#mac-address) of having an offset of two. If the WIFI-MAC is `34:85:18:0F:CC:DC`, then the BLE-MAC is `34:85:18:0F:CC:DE` (DC in hex is 220, DE is 222)
 - The SwitchbOTA flashing process is confirmed to work on both device models using firmware v1.4 or older (v1.3, v1.2)
-- It appears that a plug's MAC addresses for WiFi and BLE are identical other than the last character, which is offset by two. If the BLE-MAC is `34:85:18:0F:CC:DE`, then the WIFI-MAC is likely `34:85:18:0F:CC:DC` (DC in hex is 220, DE is 222)
 
 ## Disclaimer
 Writing to the bootloader over OTA is dangerous and not normally done for good reason. If your device loses power or somehow flashes corrupted data, the device will be bricked and require disassembly to reprogram the device. Only perform this process if you are comfortable disassembling your plug to fix it if it breaks! Of course, do not unplug or otherwise disturb the plug while it is performing the OTA.
@@ -38,7 +37,7 @@ Writing to the bootloader over OTA is dangerous and not normally done for good r
   - Note down the BLE-MAC during this process, as it will be referenced later
   - This step uses Bluetooth Low Energy (BLE) to scan for devices and send the WiFi network information
 
-![switchbot](https://github.com/kubedzero/switchbota/assets/51148401/3d6c8171-fc69-472e-be4a-0ceac03e040e)
+![switchbot](./images/switchbot-setup-screen.jpg)
 
 
 - In-app, check the device firmware by going to its settings. As of 2023-12, there was no firmware update button, and the firmware version was v1.4. If you do see the upgrade button, do not press it and wait for a later part
@@ -52,7 +51,7 @@ Writing to the bootloader over OTA is dangerous and not normally done for good r
   - This means that a DNS override or custom DNS record should be added, redirecting both `www.wohand.com` and `wohand.com` to the IP where the NodeJS server will be run. More detail can be found at https://github.com/kendallgoto/switchbota/issues/3#issuecomment-1121828064
   - In pfSense, this can be done in the Services->DNS Resolver or Forwarder by adding a Host Override with Host `www` and Domain `wohand.com` and a second override with Host `wohand` and Domain `com`, both having an IP of 192.168.0.69. Save the override and Apply the settings
 
-![pfsense](https://github.com/kubedzero/switchbota/assets/51148401/09eaeb29-5fa1-47dd-845f-d5c9f244c2f1)
+![pfsense](./images/pfsense-setup.png)
    - In PiHole, this can be done in the Local DNS->DNS Records by setting the Domain to `www.wohand.com` and `wohand.com` and the IP to 192.168.0.69
   - If your router does not support custom DNS entries, it will almost certainly support setting a custom DNS server. This may be found in the DHCP settings or the System settings. Set the custom DNS server to 192.168.0.69
 - Run a local NodeJS server to act in place of the real firmware update server and instead deliver modified firmware files: firstly the OTA file, and then the Tasmota firmware file
@@ -73,16 +72,16 @@ Writing to the bootloader over OTA is dangerous and not normally done for good r
 - Follow the instructions below, or watch [the video](https://youtu.be/iTexFQ0Th0I?si=zB-leDeiz82yL9Cy&t=635), or read the GitHub issues outlining the process https://github.com/kendallgoto/switchbota/issues/43  https://github.com/kendallgoto/switchbota/issues/3#issuecomment-1121864522
 - Using the BLE app of choice, scan for devices and Connect to the device matching the BLE-MAC noted from the SwitchBot app
 
-![nrf1](https://github.com/kubedzero/switchbota/assets/51148401/a34b5b6e-c1ac-4f8c-9b68-e89858280f32)
+![nrf1](./images/nrf-connect-screen-1.png)
 
 - Make sure the app is on the Client tab, then expand "Unknown Service" and look at the options within. The last option, "Unknown Characteristic" should have Properties such as "WRITE" and an upload button on the right side. Hit the Upload button on the right side to bring up the Write screen.
 
-![nrf2](https://github.com/kubedzero/switchbota/assets/51148401/c3f5a073-bc23-4cf2-a2f8-a926bfd45af7)
+![nrf2](./images/nrf-connect-screen-2.png)
 
 - Select the BYTE_ARRAY type from the dropdown and enter in the hex code `57 0F 0A 01 0C` (without spaces). Then it Send to transmit the command to the plug
   - The last two characters represent the firmware version to be flashed, and must be different from the current firmware version. `0C` (as shown above) represents v1.2, `0D` represents v1.3, `0E` represents v1.4. `0C` should be safe to use by default. More detail can be found [here](https://github.com/kendallgoto/switchbota/issues/3#issuecomment-1491004013) 
 
-![nrf3](https://github.com/kubedzero/switchbota/assets/51148401/93533e16-bc48-40b6-90af-c89f98381f54)
+![nrf3](./images/nrf-connect-screen-3.png)
 
 - Wait a few seconds and look at the NodeJS log to verify the command worked as it should. You should see something such as `::ffff:192.168.0.131 - /version/wocaotech/firmware/WoPlugUS/WoPlugUS_V12.bin` which indicates the NodeJS server was able to send the first `.bin` file to the plug
 - Wait about a minute after seeing the NodeJS server log to give the plug time to get ready for the next step.
@@ -93,7 +92,7 @@ Writing to the bootloader over OTA is dangerous and not normally done for good r
 ## Part 4: Tasmota Setup
 
 - **TL;DR: Connect to the Tasmota WiFI. Configure the actual WiFi. Update the firmware. Apply the SwitchBot Tasmota Template. Configure the device**
-- NOTE: The NodeJS server is configured to flash Tasmota `tasmota32c3.factory.bin` which is described to be a "Factory binary to be used for initial flashing using esptool." A more fully-featured firmware should be flashed immediately after.
+- NOTE: The NodeJS server is configured to flash Tasmota `tasmota32c3.factory.bin` which is described to be a "Factory binary to be used for initial flashing using esptool." The distinguishing factor is that a factory binary includes an entire partition table, bootloader, etc. rather than just application partition that is later sent for OTA binaries in the future.
 - NOTE: The flashed Tasmota version is `v11.1.0 Ostara` and not a later version. This is because `v12.0.0 Paul` changed the partition layout, making the ESPHome firmware harder to flash onto the plug. This change is described in more detail at https://tasmota.github.io/docs/Safeboot/
 - Connect to the Tasmota WiFi. It should be an unsecured WiFi network with SSID `tasmota-0c3d4f-1234` showing a portion of the WiFi MAC address and a random number. Once connected, configure it to connect to the real WiFi network. It will likely reuse the IP address it had earlier during the flashing process, which in this example was 192.168.0.131. 
 - Reconnect your phone to the real WiFi network and navigate to the Tasmota webpage, in this case http://192.168.0.131. Click "Firmware Upgrade," confirm the OTA URL is http://ota.tasmota.com/tasmota32/release/tasmota32c3.bin or something similar, and click "Start Upgrade." Wait a few minutes as the plug updates its firmware and reconnects to WiFi
@@ -102,19 +101,18 @@ Writing to the bootloader over OTA is dangerous and not normally done for good r
   - The template can also be found on the Tasmota device repository https://templates.blakadder.com/switchbot_plugmini_W1901400.html
   - The `GPIO` numbers refer to the different GPIO device IDs, found at https://tasmota.github.io/docs/Components/.  The `BASE` refers to a base template, which in this case is 1 or `ESP32C3`
 
+![template](./images/tasmota-configure-screen-1.png)
 
-![template](https://github.com/kubedzero/switchbota/assets/51148401/3e4d6b0a-98c0-415a-9f28-f7cc46addc0b)
-
-- Optionally perform the Power Calibration following the instructions in https://tasmota.github.io/docs/Power-Monitoring-Calibration/
+- Perform the Power Calibration following the instructions in https://tasmota.github.io/docs/Power-Monitoring-Calibration/
+  - NOTE: Power Calibration is technically optional but not doing it can cause the power readings to be off by an order of magnitude. It is highly recommended to perform Power Calibration
   - I used a Kill-a-watt and a portable space heater or hair dryer after confirming it was in a mode that had a Power Factor of 0.99 or 1.0. 
   - I then used the Kill-a-watt to note the voltage, wattage, and amperage (in my case, 122.3V, 778W, 6.36A)
   - I then used the [Backlog](https://tasmota.github.io/docs/Commands/#the-power-of-backlog) command in the Tasmota Console to write all three values at once: `Backlog0 VoltageSet 122.3; PowerSet 778; CurrentSet 6360` 
-- Optionally configure the Time Zone, and set up Daylight Savings https://tasmota.github.io/docs/Timezone-Table/
-  - USA East Coast command is `Backlog0 Timezone 99; TimeStd 0,1,11,1,2,-300; TimeDst 0,2,3,1,2,-240`
-  - USA Pacific command is `Backlog0 Timezone 99; TimeStd 0,1,11,1,2,-480; TimeDst 0,2,3,1,2,-420`
+  
+- A helpful pointer is to configure the time zone, and set up Daylight Savings https://tasmota.github.io/docs/Timezone-Table/
 - DONE! The SwitchBot Smart Plug Mini is now fully configured and ready to enter service
 
-![tasmota](https://github.com/kubedzero/switchbota/assets/51148401/635c29be-86c0-47f4-8749-8bd3b6b146d2)
+![tasmota](./images/tasmota-main-page.png)
 
 
 
