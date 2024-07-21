@@ -20,7 +20,7 @@ Some details about the devices are as follows:
 - They are ultrasonically welded shut, requiring destruction of the plastic housing to access the circuits within. There are no screws to allow access to the internals, the way there is with the Sonoff S31
 - They use the Shanghai Belling BL0937 energy measurement IC to track power usage
 - They use the Espressif ESP32-C3 chip for WiFi, Bluetooth Low Energy (BLE), and circuit control. See [here](https://tasmota.github.io/docs/ESP32/#esp32-differences) to learn about the different types of ESP32. The MAC addresses for WiFi and BLE follow the [ESP32 standard](https://docs.espressif.com/projects/esp-idf/en/latest/esp32c3/api-reference/system/misc_system_api.html#mac-address) of having an offset of two. If the WIFI-MAC is `34:85:18:0F:CC:DC`, then the BLE-MAC is `34:85:18:0F:CC:DE` (DC in hex is 220, DE is 222)
-- The SwitchbOTA flashing process is confirmed to work on both device models using firmware v1.4 or older (v1.3, v1.2)
+- The SwitchbOTA flashing process is confirmed to work on both device models using firmware v1.8 or older (v1.5, v1.4, v1.3, v1.2)
 
 ## Disclaimer
 Writing to the bootloader over OTA is dangerous and not normally done for good reason. If your device loses power or somehow flashes corrupted data, the device will be bricked and require disassembly to reprogram the device. Only perform this process if you are comfortable disassembling your plug to fix it if it breaks! Of course, do not unplug or otherwise disturb the plug while it is performing the OTA.
@@ -33,41 +33,49 @@ Writing to the bootloader over OTA is dangerous and not normally done for good r
 - Install the SwitchBot app on your phone https://play.google.com/store/apps/details?id=com.theswitchbot.switchbot
 - Sign in or create an account (necessary to allow devices to be added/configured)
 - Plug the plug into a wall outlet
-- In-app, add a device. It's safe to connect it to your WiFi network. 
-  - Note down the BLE-MAC during this process, as it will be referenced later
+- In SwitchBot app, Add a device. It's safe to connect it to your WiFi network. 
+  - Note down the BLE-MAC at the bottom of the page, as it will be referenced in Part 3
   - This step uses Bluetooth Low Energy (BLE) to scan for devices and send the WiFi network information
 
 ![switchbot](./images/switchbot-setup-screen.jpg)
 
 
-- In-app, check the device firmware by going to its settings. As of 2023-12, there was no firmware update button, and the firmware version was v1.4. If you do see the upgrade button, do not press it and wait for a later part
+- In Switchbot app, check the device firmware version by going to Settings. As of July 2024, the firmware version was v1.5. If you do see the Upgrade button, DO NOT press it until you complete Part 2
 - DONE! The plug is now ready for the firmware flashing process
 
-## Part 2: Network and Server Setup 
-
-- **TL;DR: Configure your router & DNS to redirect calls to a local IP. Run a local NodeJS server at that IP**
+## Part 2.1: NodeJS Server Setup 
+**TL;DR: Run a local NodeJS server with the code.**
 - Note down the LAN/local IP address where the NodeJS server will be run. For this example, it will be `192.168.0.69`
-- Configure your router and/or DNS to redirect calls to SwitchBot servers to instead hit your NodeJS server
+- Run a local NodeJS server to act in place of the real firmware update server and instead deliver modified firmware files: firstly the OTA file, and then the Tasmota firmware file
+  - Install NodeJS on your computer https://nodejs.org/en/learn/getting-started/how-to-install-nodejs
+  - Download the Code and place it in a convenient location
+  - Using a CLI or Terminal, `cd` into the `server/` directory (where you placed the code) and run `npm i` (short for `npm install`) to install the dependencies required for this project. 
+  - Once the previous command completes, run `node index.js` to run the server. 
+    - OR, if you don't have PiHome, pfsense or router that allows static DNS record, run `node index.js 192.168.0.69` (replace IP address with the IP of your NodeJS server). This will start the server, in addition to a Man-in-the-middle DNS server that redirects `*wohand.com` calls to the IP of the NodeJS server, rather than the public IP of `*wohand.com`. All other DNS lookups will be unaffected
+  - The CLI or Terminal should show `Server listening on port 80` (and `Server listening on port 53` if you added IP address). Keep this window open for the duration of the flashing process
+
+## Part 2.2: DNS Redirect
+**TL;DR: Configure your DNS to redirect calls to the local IP of the NodeJS server.**
+- Configure your router and/or DNS to redirect calls to SwitchBot servers (wohand.com) to instead hit your NodeJS server
   - This means that a DNS override or custom DNS record should be added, redirecting both `www.wohand.com` and `wohand.com` to the IP where the NodeJS server will be run. More detail can be found at https://github.com/kendallgoto/switchbota/issues/3#issuecomment-1121828064
   - In pfSense, this can be done in the Services->DNS Resolver or Forwarder by adding a Host Override with Host `www` and Domain `wohand.com` and a second override with Host `wohand` and Domain `com`, both having an IP of 192.168.0.69. Save the override and Apply the settings
 
 ![pfsense](./images/pfsense-setup.png)
    - In PiHole, this can be done in the Local DNS->DNS Records by setting the Domain to `www.wohand.com` and `wohand.com` and the IP to 192.168.0.69
   - If your router does not support custom DNS entries, it will almost certainly support setting a custom DNS server. This may be found in the DHCP settings or the System settings. Set the custom DNS server to 192.168.0.69
-- Run a local NodeJS server to act in place of the real firmware update server and instead deliver modified firmware files: firstly the OTA file, and then the Tasmota firmware file
-  - Install NodeJS on your computer https://nodejs.org/en/learn/getting-started/how-to-install-nodejs
-  - Using a CLI or Terminal, `cd` into the `server/` directory and run `npm i` (short for `npm install`) to install the dependencies required for this project
-  - Once the previous command completes, run `node index.js` to run the server. 
-    - OR, if you could not set up a DNS record in the previous step, run `node index.js 192.168.0.69` . This will start the server, in addition to a Man-in-the-middle DNS server that redirects `*wohand.com` calls to the IP of the NodeJS server, rather than the public IP of `*wohand.com`. All other DNS lookups will be unaffected
-  - The CLI or Terminal should show `Server listening on port 80`. Keep this window open for the duration of the flashing process
+
 - Test the DNS functionality by opening a new CLI or Terminal and running `ping wohand.com` and `ping www.wohand.com` to confirm that the local IP shows up. In this example, look for 192.168.0.69
-- Test the Node server functionality by opening the SwitchBot app and then looking at the terminal where Node is running. A new line should have shown up similar to `::ffff:192.168.0.101 - /version/wocaotech/release.json`. This indicates the server was accessed instead of the real `wohand.com` and that it successfully served a JSON file to the app. The IP 192.168.0.101 is the IP of the phone running the app. 
+- Test the Node server functionality by opening the SwitchBot app and then looking at the Terminal where Node JD is running. A new line should have shown up similar to `::ffff:192.168.0.101 - /version/wocaotech/release.json`. This indicates the local NodeJS server was accessed instead of the real `wohand.com` and that it successfully served a JSON file to the app. The IP 192.168.0.101 is the IP of the phone running the app. 
 - DONE! The network is now configured and the server should now be ready to serve firmware files to the plug
 
 ## Part 3: Firmware Flashing
 
-- **TL;DR: Send BLE commands to the SwitchBot plug to trigger the firmware upgrade process**
-- If you saw an upgrade button in the SwitchBot app, it is now safe to hit that button. No additional actions should be needed, and the firmware replacement process should complete. If no button is present in the SwitchBot app, proceed
+- **TL;DR: Flash Tasmota using Switchbot App Upgrade or Send BLE commands to the SwitchBot plug to trigger the firmware upgrade process**
+- If you saw an Upgrade button in _Settings/Firmware_ section in the SwitchBot app, it is now safe to hit that button.
+- In the NodeJS terminal, you should see _Request from [IP_Add] for www.wohand.com_, followed by _::ffff:[IP_add] - /app.bin_ and then a min later _::ffff:[IP_add] - /payload.bin_
+- No additional actions should be needed, and the firmware replacement process should complete.
+
+- **If no Upgrade button is present** in the SwitchBot app, proceed to BLE Update Triggering
 - Install an app such as [nRF Connect for Mobile](https://play.google.com/store/apps/details?id=no.nordicsemi.android.mcp). This will be used to connect to the Bluetooth Low Energy (BLE) radio of the plug to trigger the firmware update process. [Bluetility for Mac](https://github.com/jnross/Bluetility) is also reported to work
 - Follow the instructions below, or watch [the video](https://youtu.be/iTexFQ0Th0I?si=zB-leDeiz82yL9Cy&t=635), or read the GitHub issues outlining the process https://github.com/kendallgoto/switchbota/issues/43  https://github.com/kendallgoto/switchbota/issues/3#issuecomment-1121864522
 - Using the BLE app of choice, scan for devices and Connect to the device matching the BLE-MAC noted from the SwitchBot app
@@ -78,26 +86,45 @@ Writing to the bootloader over OTA is dangerous and not normally done for good r
 
 ![nrf2](./images/nrf-connect-screen-2.png)
 
-- Select the BYTE_ARRAY type from the dropdown and enter in the hex code `57 0F 0A 01 0C` (without spaces). Then it Send to transmit the command to the plug
+- Select the BYTE_ARRAY type from the dropdown and enter in the hex code `570F0A010C`. Then hit Send to transmit the command to the plug
   - The last two characters represent the firmware version to be flashed, and must be different from the current firmware version. `0C` (as shown above) represents v1.2, `0D` represents v1.3, `0E` represents v1.4. `0C` should be safe to use by default. More detail can be found [here](https://github.com/kendallgoto/switchbota/issues/3#issuecomment-1491004013) 
 
 ![nrf3](./images/nrf-connect-screen-3.png)
 
-- Wait a few seconds and look at the NodeJS log to verify the command worked as it should. You should see something such as `::ffff:192.168.0.131 - /version/wocaotech/firmware/WoPlugUS/WoPlugUS_V12.bin` which indicates the NodeJS server was able to send the first `.bin` file to the plug
+- Wait a few seconds and look at the NodeJS terminal/log to verify the command worked as it should. You should see something such as `::ffff:192.168.0.131 - /version/wocaotech/firmware/WoPlugUS/WoPlugUS_V12.bin` which indicates the NodeJS server was able to send the first `.bin` file to the plug
 - Wait about a minute after seeing the NodeJS server log to give the plug time to get ready for the next step.
-- Now send a new BYTE_ARRAY command in the BLE app (nRF Connect) with hex `57 0F 0B`. Hit Send to trigger the second and final firmware flash step
+- Now send a new BYTE_ARRAY command in the BLE app (nRF Connect) with hex `570F0B`. Hit Send to trigger the second and final firmware flash step
 - Wait a few seconds again and then look at the NodeJS log to verify the command worked as it should. You should see something such as `::ffff:192.168.0.131 - /payload.bin` which indicates the NodeJS server was able to send the Tasmota `.bin` file to the plug
 - DONE! The firmware flashing should be complete
 
 ## Part 4: Tasmota Setup
-
 - **TL;DR: Connect to the Tasmota WiFI. Configure the actual WiFi. Update the firmware. Apply the SwitchBot Tasmota Template. Configure the device**
-- NOTE: The NodeJS server is configured to flash Tasmota `tasmota32c3.factory.bin` which is described to be a "Factory binary to be used for initial flashing using esptool." The distinguishing factor is that a factory binary includes an entire partition table, bootloader, etc. rather than just application partition that is later sent for OTA binaries in the future
-- NOTE: The flashed Tasmota version is `v11.1.0 Ostara` and not a later version. This is because `v12.0.0 Paul` changed the partition layout to have a Safeboot partition, making the ESPHome firmware harder to flash onto the plug. This change is described in more detail [here](https://tasmota.github.io/docs/Safeboot/)
-- Connect to the Tasmota WiFi. It should be an unsecured WiFi network with SSID `tasmota-0c3d4f-1234` showing a portion of the WiFi MAC address and a random number. Once connected, configure it to connect to the real WiFi network. It will likely reuse the IP address it had earlier during the flashing process, which in this example was 192.168.0.131
-- Reconnect your phone to the real WiFi network and navigate to the Tasmota webpage, in this case http://192.168.0.131. Click "Firmware Upgrade," confirm the OTA URL is http://ota.tasmota.com/tasmota32/release/tasmota32c3.bin or something similar, and click "Start Upgrade." Wait a few minutes as the plug updates its firmware and reconnects to WiFi
-  - NOTE: The firmware upgrade may only succeed once, due to the first Tasmota firmware being a factory version that is easily overwritten. Subsequent firmware upgrades may fail silently, meaning the device reboots but the firmware doesn't actually upgrade. Check the console for signs of an error such as `{"StatusSTK":{"Exception":7,"Reason":"Store access fault","EPC":"403832ae","EXCVADDR":"00000000","CallChain":["40387caa","4038be68","420adf92","4038d178","403801ee","421161a0","42115638","42096b3e","42096bd6","42013be6"]}}` to validate if this is happening. This is due to the mismatch in partition layout
-  - The partition layout can be fixed by using the Tasmota Application "Partition Wizard" which can be downloaded from [here](https://tasmota.github.io/docs/Tasmota-Application/#partition-management). Partition Manager is also available but is not needed for this process. Download the `Partition Wizard.tapp` file to your computer
+
+> [!NOTE]
+> The NodeJS server is configured to flash Tasmota `tasmota32c3.factory.bin` which is described to be a "Factory binary to be used for initial flashing using esptool." The distinguishing factor is that a factory binary includes an entire partition table, bootloader, etc. rather than just application partition that is later sent for OTA binaries in the future
+>
+> The flashed Tasmota version is `v11.1.0 Ostara` and **does not** contain Bluetooth support. So you have a wireless plug with power monitoring but no BLE.
+>  
+> Bluetooth support for ESP32-C3 is only available in the Development Firmwares: https://ota.tasmota.com/tasmota32/
+
+- Choose a firmware
+  - Tasmota 11.1 allows OTA for firmwares up to 1856KB in size. So 13.2 is the highest you can flash - http://ota.tasmota.com/tasmota32/release-13.2.0/tasmota32c3.bin (13.0 will not work as the firmware is 1893KB)
+  - To update to Tasmota firmwares after 13.2, you will need to convert to Safeboot partition - **Note: Safeboot partition will break compatability with ESPHome32!**
+  - To convert to Safeboot partition, you will need to flash to 12.5 http://ota.tasmota.com/tasmota32/release-12.5.0/tasmota32c3.bin and then use Partition Wizard as mentioned by @t413 https://github.com/kendallgoto/switchbota/pull/48#issuecomment-1884051718
+  - Make sure you select the "C3" firmware. If you accidentally flash another firmware and the device becomes unresponsive, you can try to recover by holding down the power button for 40 seconds, which should reset the device into Tasmota setup mode (wifi hotspot with tasmota-xxxxxx-xxxx)
+
+- Connect to the Tasmota WiFi. It should be an unsecured WiFi network with SSID `tasmota-0c3d4f-1234` showing a portion of the WiFi MAC address and a random number. Once connected, configure it to connect to the real WiFi network. It will reboot and likely have the IP address it had earlier during the flashing process, which in this example was 192.168.0.131
+- Reconnect your phone to the real WiFi network and navigate to the Tasmota webpage, in this case http://192.168.0.131.
+- Click "Firmware Upgrade"
+- Confirm the OTA URL (ends in tasmota32c3.bin), and click "Start Upgrade."
+- Wait a few minutes as the plug updates its firmware and restarts
+- Check the Tasmota Information section to see if the firmware version has changed.
+- If the version hasn't changed, check the Console for signs of an error such as `{"StatusSTK":{"Exception":7,"Reason":"Store access fault","EPC":"403832ae","EXCVADDR":"00000000","CallChain":["40387caa","4038be68","420adf92","4038d178","403801ee","421161a0","42115638","42096b3e","42096bd6","42013be6"]}}` to validate if this is happening. This is due to the mismatch in partition layout. This change in partition to Safeboot is described in more detail [here](https://tasmota.github.io/docs/Safeboot/)
+
+Safeboot Partition Wizard
+> [!Note]
+> Changing to Safeboot will break compatability with ESPHome32 - Do not proceed unless you are sure you won't use ESPHome32
+- The partition layout can be updated by using the Tasmota Application "Partition Wizard" which can be downloaded from [here](https://raw.githubusercontent.com/arendst/Tasmota/development/tasmota/berry/modules/Partition_Wizard.tapp). Partition Manager is also available but is not needed for this process. Download the `Partition Wizard.tapp` file to your computer
   - Go to the SwitchBot Tasmota interface, into "Consoles" and then "Manage File System." Select the `Partition Wizard.tapp` file and click "Upload." If the page refreshes without showing the newly added file, reboot the Tasmota and try again and it should upload
   - Reboot the Tasmota once the file is uploaded to get Tasmota to recognize the app. Then go to "Consoles" and then "Partition Wizard" to see the following page. It shows that the current partition layout is `app0` and `app1` and `fs` which is incompatible with larger firmwares, hence the need for an upgrade. There is thankfully a section to fix this with one button, "Start migration." Click it, confirm the multiple reboots warning, and wait a few minutes. Note that it will also update the firmware as part of this process
   - ![pre-partition-wizard](./images/pre-partition-wizard.png)
@@ -124,19 +151,12 @@ Writing to the bootloader over OTA is dangerous and not normally done for good r
 
 ![tasmota](./images/tasmota-main-page.png)
 
-
-
-
-
-
 ____
 
-
-
-## Firmware Update Sequence Detail
+## Switchbota Firmware Update Sequence Detail
 The included ESP-IDF code is a lightweight OTA client that directly writes to the embedded flash chip, enabling the install of non-app level code, including modfiying the bootloader and partiton table.
 
-1. The update is triggered by the app with a BLE message, such as `57 0F 0A 01 0C`
+1. The update is triggered by the Switchbot app or a BLE message, such as `57 0F 0A 01 0C`
 2. The device fetches `http://www.wohand.com/version/wocaotech/firmware/WoPlugUS/WoPlugUS_VXX.bin` for the firmware
 3. The request is intercepted and served by the NodeJS web server, which downloads the Espressif binary
 4. The factory firmware installs the binary to ota_0 or ota_1, depending on past usage
